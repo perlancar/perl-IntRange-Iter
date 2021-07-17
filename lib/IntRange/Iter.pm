@@ -11,6 +11,7 @@ use warnings;
 use Exporter qw(import);
 our @EXPORT_OK = qw(intrange_iter);
 
+# allow_dash
 our $re1a = qr/\A(?:
                    (?:(?:-?[0-9]+)(?:\s*-\s*(?:-?[0-9]+))?)
                    (
@@ -23,15 +24,30 @@ our $re1b = qr/\A
                    (-?[0-9]+)\s*-\s*(-?[0-9]+) | (-?[0-9]+)
                )
               /x;
-# allow dotdot
+
+# allow_dotdot
 our $re2a = qr/\A(?:
+                   (?:(?:-?[0-9]+)(?:\s*\.\.\s*(?:-?[0-9]+))?)
+                   (
+                       \s*,\s*
+                       (?:(?:-?[0-9]+)(?:\s*\.\.\s*(?:-?[0-9]+))?)
+                   )*
+               )\z/x;
+our $re2b = qr/\A
+               (?:\s*,\s*)?(?:
+                   (-?[0-9]+)\s*\.\.\s*(-?[0-9]+) | (-?[0-9]+)
+               )
+              /x;
+
+# allow_dash + allow dotdot
+our $re3a = qr/\A(?:
                    (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
                    (
                        \s*,\s*
                        (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
                    )*
                )\z/x;
-our $re2b = qr/\A
+our $re3b = qr/\A
                (?:\s*,\s*)?(?:
                    (-?[0-9]+)\s*(?:-|\.\.)\s*(-?[0-9]+) | (-?[0-9]+)
                )
@@ -41,8 +57,14 @@ sub intrange_iter {
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     my $intrange = shift;
 
-    my $re_a = $opts->{allow_dotdot} ? $re2a : $re1a;
-    my $re_b = $opts->{allow_dotdot} ? $re2b : $re1b;
+    my $allow_dash   = $opts->{allow_dash} // 1;
+    my $allow_dotdot = $opts->{allow_dotdot} // 0;
+    unless ($allow_dash || $allow_dotdot) { die "At least must enable allow_dash or allow_dotdot" }
+
+    my ($re_a, $re_b);
+    if ($allow_dash && $allow_dotdot) { ($re_a, $re_b) = ($re3a, $re3b) }
+    elsif ($allow_dash)               { ($re_a, $re_b) = ($re1a, $re1b) }
+    elsif ($allow_dotdot)             { ($re_a, $re_b) = ($re2a, $re2b) }
 
     unless ($intrange =~ $re_a) {
         die "Invalid syntax for intrange, please use a (1), a-b (1-3), or sequence of a-b (1,5-10,15)";
@@ -103,6 +125,22 @@ numbers are exhausted, the coderef will return undef. No class/object involved.
 Usage:
 
  $iter = intrange_iter([ \%opts ], $spec); # coderef
+
+Options:
+
+=over
+
+=item * allow_dash
+
+Bool. Default true. At least one of C<allow_dash> or L</allow_dotdot> must be
+true.
+
+=item * allow_dotdot
+
+Bool. Default false. At least one of L</allow_dash> or C<allow_dotdot> must be
+true.
+
+=back
 
 
 =head1 SEE ALSO
