@@ -15,19 +15,19 @@ sub intrange_iter {
     my $intrange = shift;
 
     unless ($intrange =~ /\A(?:
-                              (?:(?:-?[0-9]+)(?:\s*-\s*(?:-?[0-9]+))?)
+                              (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
                               (
                                   \s*,\s*
-                                  (?:(?:-?[0-9]+)(?:\s*-\s*(?:-?[0-9]+))?)
+                                  (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
                               )*
                           )\z/x) {
-        die "Invalid syntax for intrange, please use a (1), a-b (1-3), or sequence of a-b (1,5-10,15)";
+        die "Invalid syntax for intrange, please use a (1), a-b (1-3), a..b (1..3) or sequence of a-b (1,5-10,15)";
     }
 
     my @subranges;
     while ($intrange =~ s/\A
                          (?:\s*,\s*)?(?:
-                             (-?[0-9]+)\s*-\s*(-?[0-9]+) | (-?[0-9]+)
+                             (-?[0-9]+)\s*(?:-|\.\.)\s*(-?[0-9]+) | (-?[0-9]+)
                          )
                         //x) {
         push @subranges, defined($1) ? [$1, $2] : $3;
@@ -64,7 +64,7 @@ sub intrange_iter {
 
   use IntRange::Iter qw(intrange_iter);
 
-  my $iter = intrange_iter('1,5-10,15');
+  my $iter = intrange_iter('1,5-10,15'); # or: 1,5..10,15
   while (my $val = $iter->()) { ... } # 1, 5,6,7,8,9,10, 15, undef, ...
 
 
