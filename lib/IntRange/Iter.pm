@@ -147,4 +147,6 @@ true.
 
 L<Range::Iter>
 
+L<NumSeq::Iter>
+
 =cut
