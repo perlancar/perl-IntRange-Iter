@@ -22,11 +22,12 @@ subtest intrange_iter => sub {
 
     is_deeply(iter_vals(intrange_iter('1-3')), [1,2,3]);
     is_deeply(iter_vals(intrange_iter('1 - 3')), [1,2,3]);
-    is_deeply(iter_vals(intrange_iter('1..3')), [1,2,3]);
-    is_deeply(iter_vals(intrange_iter('1 .. 3')), [1,2,3]);
+    dies_ok { intrange_iter('1..3') };
+    is_deeply(iter_vals(intrange_iter({allow_dotdot=>1}, '1..3')), [1,2,3]);
+    is_deeply(iter_vals(intrange_iter({allow_dotdot=>1}, '1 .. 3')), [1,2,3]);
 
     is_deeply(iter_vals(intrange_iter('1,5-10,15')), [1,5..10,15]);
-    is_deeply(iter_vals(intrange_iter('1,5..10,15')), [1,5..10,15]);
+    is_deeply(iter_vals(intrange_iter({allow_dotdot=>1}, '1,5..10,15')), [1,5..10,15]);
 
     is_deeply(iter_vals(intrange_iter('1,10-5,15')), [1,15]); # TODO: should we die instead?
 };

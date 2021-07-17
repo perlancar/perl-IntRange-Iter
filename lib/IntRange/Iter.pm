@@ -11,25 +11,45 @@ use warnings;
 use Exporter qw(import);
 our @EXPORT_OK = qw(intrange_iter);
 
+our $re1a = qr/\A(?:
+                   (?:(?:-?[0-9]+)(?:\s*-\s*(?:-?[0-9]+))?)
+                   (
+                       \s*,\s*
+                       (?:(?:-?[0-9]+)(?:\s*-\s*(?:-?[0-9]+))?)
+                   )*
+               )\z/x;
+our $re1b = qr/\A
+               (?:\s*,\s*)?(?:
+                   (-?[0-9]+)\s*-\s*(-?[0-9]+) | (-?[0-9]+)
+               )
+              /x;
+# allow dotdot
+our $re2a = qr/\A(?:
+                   (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
+                   (
+                       \s*,\s*
+                       (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
+                   )*
+               )\z/x;
+our $re2b = qr/\A
+               (?:\s*,\s*)?(?:
+                   (-?[0-9]+)\s*(?:-|\.\.)\s*(-?[0-9]+) | (-?[0-9]+)
+               )
+              /x;
+
 sub intrange_iter {
+    my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     my $intrange = shift;
 
-    unless ($intrange =~ /\A(?:
-                              (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
-                              (
-                                  \s*,\s*
-                                  (?:(?:-?[0-9]+)(?:\s*(?:-|\.\.)\s*(?:-?[0-9]+))?)
-                              )*
-                          )\z/x) {
-        die "Invalid syntax for intrange, please use a (1), a-b (1-3), a..b (1..3) or sequence of a-b (1,5-10,15)";
+    my $re_a = $opts->{allow_dotdot} ? $re2a : $re1a;
+    my $re_b = $opts->{allow_dotdot} ? $re2b : $re1b;
+
+    unless ($intrange =~ $re_a) {
+        die "Invalid syntax for intrange, please use a (1), a-b (1-3), or sequence of a-b (1,5-10,15)";
     }
 
     my @subranges;
-    while ($intrange =~ s/\A
-                         (?:\s*,\s*)?(?:
-                             (-?[0-9]+)\s*(?:-|\.\.)\s*(-?[0-9]+) | (-?[0-9]+)
-                         )
-                        //x) {
+    while ($intrange =~ s/$re_b//) {
         push @subranges, defined($1) ? [$1, $2] : $3;
     }
     #use DD; dd \@subranges;
@@ -64,8 +84,9 @@ sub intrange_iter {
 
   use IntRange::Iter qw(intrange_iter);
 
-  my $iter = intrange_iter('1,5-10,15'); # or: 1,5..10,15
-  while (my $val = $iter->()) { ... } # 1, 5,6,7,8,9,10, 15, undef, ...
+  my $iter = intrange_iter('1,5-10,15-17'); # or: intrange_iter({allow_dotdot=>1}, '1,5-10,15..17');
+
+  while (my $val = $iter->()) { ... } # 1, 5,6,7,8,9,10, 15,16,17 undef, ...
 
 
 =head1 DESCRIPTION
@@ -78,6 +99,10 @@ numbers are exhausted, the coderef will return undef. No class/object involved.
 =head1 FUNCTIONS
 
 =head2 intrange_iter
+
+Usage:
+
+ $iter = intrange_iter([ \%opts ], $spec); # coderef
 
 
 =head1 SEE ALSO
