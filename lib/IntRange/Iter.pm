@@ -149,4 +149,6 @@ L<Range::Iter>
 
 L<NumSeq::Iter>
 
+Modules that might also interest you: L<Set::IntSpan> and L<Array::IntSpan>.
+
 =cut
