@@ -145,9 +145,13 @@ true.
 
 =head1 SEE ALSO
 
-L<Range::Iter>
+Other iterators: L<Range::Iter>, L<NumSeq::Iter>.
 
-L<NumSeq::Iter>
+CLI for this module: L<seq-intrange> (from L<App::seq::intrange>)
+
+L<Regexp::Pattern::IntRange>
+
+L<Sah::Schemas::IntRange>
 
 Modules that might also interest you: L<Set::IntSpan> and L<Array::IntSpan>.
 
